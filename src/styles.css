@@ -300,6 +300,24 @@
   .story-choices { display: grid; gap: 8px; margin-top: 28px; }
   .story-choices button { display: flex; justify-content: space-between; padding: 15px 17px; border: 1px solid var(--line); background: transparent; cursor: pointer; text-align: left; font-size: 12px; font-weight: 850; }
   .story-choices button:hover { background: var(--accent); border-color: var(--ink); }
+  .vault-section { border-top: 1px solid var(--line); padding: 76px clamp(22px, 5vw, 84px); background: color-mix(in srgb, var(--screen) 30%, var(--paper)); }
+  .vault-heading { max-width: 1420px; margin: 0 auto 30px; display: flex; justify-content: space-between; gap: 30px; align-items: end; }
+  .vault-heading h2 { margin: 0; font-size: clamp(30px, 3.6vw, 56px); line-height: .96; letter-spacing: -.055em; }
+  .vault-heading > p { max-width: 520px; margin: 0; font-size: 12px; line-height: 1.6; opacity: .7; }
+  .vault-grid { max-width: 1420px; margin: 0 auto; display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .vault-card { display: grid; align-content: start; gap: 12px; padding: clamp(20px, 3vw, 30px); border: 2px solid var(--ink); background: var(--paper); box-shadow: 8px 8px 0 color-mix(in srgb, var(--shell) 34%, transparent); }
+  .vault-card h3 { margin: 0; font: clamp(19px, 2.2vw, 27px) 'Dela Gothic One'; letter-spacing: -.045em; }
+  .vault-card > p { margin: 0; font-size: 12px; line-height: 1.55; opacity: .7; }
+  .vault-actions { display: flex; flex-wrap: wrap; gap: 9px; }
+  .vault-actions button, .vault-restore { min-height: 44px; padding: 0 17px; border: 2px solid var(--ink); background: var(--paper); cursor: pointer; font-size: 9px; font-weight: 950; letter-spacing: .1em; }
+  .vault-primary { background: var(--accent) !important; }
+  .vault-actions button:hover, .vault-restore:hover:not(:disabled) { background: var(--ink); color: var(--paper); }
+  .vault-file { position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+  .vault-paste { display: grid; gap: 7px; font-size: 9px; font-weight: 950; letter-spacing: .1em; }
+  .vault-paste textarea { padding: 11px; border: 1px solid var(--line); background: color-mix(in srgb, var(--paper) 92%, white); font: 11px/1.5 monospace; resize: vertical; }
+  .vault-restore:disabled { cursor: not-allowed; opacity: .42; }
+  .vault-status { max-width: 1420px; margin: 18px auto 0; font-size: 11px; font-weight: 850; opacity: .72; }
+  .vault-status.is-error { padding-left: 11px; border-left: 3px solid #d85c65; opacity: 1; }
   .webgl-fallback { height: 100%; display: grid; place-items: center; padding: 2rem; text-align: center; }
   @keyframes music-pulse { 50% { transform: scale(.9); } }
   @keyframes signal-pop { from { opacity: 0; transform: translateY(12px) rotate(-4deg); } }
@@ -383,6 +401,10 @@
     .activity-card > b { grid-column: 2; }
     .activity-art { height: 105px; }
     .reward-counter { width: 100%; }
+    .vault-section { padding: 56px 17px; }
+    .vault-heading { align-items: start; flex-direction: column; gap: 16px; }
+    .vault-grid { grid-template-columns: 1fr; }
+    .vault-actions button, .vault-restore { width: 100%; }
     .game-overlay, .tutorial-overlay, .install-overlay, .story-overlay { padding: max(12px, env(safe-area-inset-top, 0px)) max(12px, env(safe-area-inset-right, 0px)) max(12px, env(safe-area-inset-bottom, 0px)) max(12px, env(safe-area-inset-left, 0px)); }
     .game-dialog, .story-dialog, .tutorial-dialog, .install-dialog { max-height: calc(100dvh - 24px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px)); overflow: auto; }
     .game-dialog > header { min-height: 100px; padding: 17px; }

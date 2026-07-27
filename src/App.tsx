@@ -7,6 +7,7 @@ import { useNostalgiaMusic } from './audio/chiptune'
 import { ActivityArcade } from './ui/ActivityArcade'
 import { FirstRunTutorial } from './ui/FirstRunTutorial'
 import { GrowthStudio } from './ui/GrowthStudio'
+import { PocketVault } from './ui/PocketVault'
 
 const PetScene = lazy(() => import('./scene/PetScene').then((module) => ({ default: module.PetScene })))
 
@@ -458,6 +459,8 @@ export default function App() {
           ))}
         </div>
       </section>
+
+      <PocketVault />
 
       <footer>
         <span>TAMAGOCHI · ORIGINAL VIRTUAL PET</span>

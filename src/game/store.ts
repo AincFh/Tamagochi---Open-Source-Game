@@ -16,48 +16,23 @@ import {
   utcDateKey,
 } from './progression'
 import { freshSnapshot, normalizeSnapshot } from './save'
-import { clampNeed, type CareAction, type GameMode, type GameSnapshot, type KeepsakeId, type MiniGameId, type PetNeeds, type StoryEvent, type ThemeId } from './types'
+import { isStoryUnlocked, STORY_EVENTS } from './stories'
+import { parseSaveTransfer, saveFileName, serializeSave } from './transfer'
+import { clampNeed, type CareAction, type GameMode, type GameSnapshot, type KeepsakeId, type MiniGameId, type PetNeeds, type ThemeId } from './types'
 
-export const STORY_EVENTS: readonly StoryEvent[] = [
-  {
-    eyebrow: 'A SMALL BEGINNING',
-    title: 'Something is tapping from inside the shell…',
-    body: 'Two bright eyes appear. The little creature waits for the first sound of its new life.',
-    choices: [
-      { label: 'Hum a soft hello', reply: 'Mori sways to the tune and remembers it.', bond: 8, joy: 10, trait: 'gentle' },
-      { label: 'Tap back twice', reply: 'Tap. Tap. A secret greeting is born.', bond: 6, joy: 14, trait: 'playful' },
-    ],
-  },
-  {
-    eyebrow: 'STORY 01 · THE LOST LIGHT',
-    title: 'A tiny light falls from the sky.',
-    body: 'Mori cups the flickering spark. It could warm the room—or guide another creature home.',
-    choices: [
-      { label: 'Hang it by the window', reply: 'The room glows like a remembered summer.', bond: 9, joy: 6, trait: 'gentle' },
-      { label: 'Send it home', reply: 'Far away, another pocket world blinks thank you.', bond: 12, joy: 4, trait: 'curious' },
-    ],
-  },
-  {
-    eyebrow: 'STORY 02 · RAIN MUSIC',
-    title: 'The rain has forgotten its rhythm.',
-    body: 'Drops hover silently above the garden. Mori looks to you for the missing beat.',
-    choices: [
-      { label: 'Dance the rhythm', reply: 'The rain tumbles down in a laughing chorus.', bond: 10, joy: 12, trait: 'playful' },
-      { label: 'Listen together', reply: 'In the quiet, the rain finds its own song.', bond: 14, joy: 7, trait: 'curious' },
-    ],
-  },
-]
+export { getStoryBondRequirement, isStoryUnlocked, STORY_COUNT, STORY_EVENTS } from './stories'
 
 const ACTIVITY_SCORE_LIMIT: Record<MiniGameId, number> = {
   'star-catch': 100,
   'memory-flip': 20,
 }
 
-export const getStoryBondRequirement = (storyIndex: number) => storyIndex * 10 + 4
+export interface SaveExport {
+  contents: string
+  fileName: string
+}
 
-export const isStoryUnlocked = (storyIndex: number, bond: number) => (
-  storyIndex < STORY_EVENTS.length && bond >= getStoryBondRequirement(storyIndex)
-)
+export type SaveImportResult = { ok: true } | { ok: false; error: string }
 
 const normalizeActivityScore = (gameId: MiniGameId, score: number) => {
   if (!Number.isFinite(score)) return 0
@@ -75,6 +50,8 @@ interface GameState extends GameSnapshot {
   closeStory: () => void
   setTheme: (themeId: ThemeId) => void
   setMode: (mode: GameMode) => void
+  exportSave: () => SaveExport
+  importSave: (contents: string) => SaveImportResult
   reset: () => void
 }
 
@@ -98,7 +75,7 @@ const applyCareEffects = (current: PetNeeds, action: CareAction) => {
 
 export const useGameStore = create<GameState>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       ...freshSnapshot(),
       tick: () => set((state) => settleTimedState(state, Date.now())),
       care: (action) => set((state) => {
@@ -239,6 +216,25 @@ export const useGameStore = create<GameState>()(
       closeStory: () => set({ storyOpen: false }),
       setTheme: (themeId) => set({ themeId, lastReply: null }),
       setMode: (mode) => set((state) => ({ ...settleTimedState(state, Date.now()), mode })),
+      exportSave: () => {
+        const now = Date.now()
+        const snapshot = normalizeSnapshot(get(), now)
+        return {
+          contents: serializeSave(snapshot, now),
+          fileName: saveFileName(snapshot.petName, now),
+        }
+      },
+      importSave: (contents) => {
+        const parsed = parseSaveTransfer(contents, Date.now())
+        if (!parsed.ok) return parsed
+        set({
+          ...parsed.snapshot,
+          storyOpen: false,
+          lastAction: null,
+          lastReply: `${parsed.snapshot.petName} woke up from a restored backup.`,
+        })
+        return { ok: true }
+      },
       reset: () => set(freshSnapshot()),
     }),
     {

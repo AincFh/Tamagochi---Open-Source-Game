@@ -31,6 +31,8 @@ The whole game runs in the browser. It saves to the current device, works offlin
 - Play Star Catch and Signal Memory to earn Sparks.
 - Spend Sparks on cosmetic wearables and room keepsakes.
 - Switch between Sakura, Neon, Moss, and Moon pocket worlds.
+- Unlock five story memories that shape Mori's personality.
+- Export and restore your save from the Pocket Vault when moving browsers or devices.
 - Install the game as a PWA and keep playing offline.
 
 ## Screenshots
@@ -56,7 +58,7 @@ The whole game runs in the browser. It saves to the current device, works offlin
 
 ## Help build it
 
-Contributions are welcome. The clearest places to help next are save import and export, simulation tests, mobile graphics settings, new incidents and stories, translations, and additional Arcade games. Please open an issue before starting a large change so the idea can be discussed first.
+Contributions are welcome. The clearest places to help next are simulation tests, mobile graphics settings, new incidents and stories, translations, and additional Arcade games. Please open an issue before starting a large change so the idea can be discussed first.
 
 > [!NOTE]
 > Tamagochi is open source under the [MIT License](LICENSE). You can use, modify, and distribute the project under the license terms.
@@ -70,6 +72,7 @@ Contributions are welcome. The clearest places to help next are save import and 
 - [PWA installation](#pwa-installation)
 - [Architecture](#architecture)
 - [Save data, offline play, and privacy](#save-data-offline-play-and-privacy)
+- [Pocket Vault backups](#pocket-vault-backups)
 - [Deployment](#deployment)
 - [Contributing](#contributing)
 - [Original-content policy](#original-content-policy)
@@ -109,7 +112,7 @@ Growth points move Mori through three forms:
 2. **Bloom** — unlocked at 120 growth.
 3. **Luminary** — unlocked at 320 growth.
 
-Care, story choices, incidents, and the Arcade shape Gentle, Playful, and Curious scores. Care-based growth is cooldown-gated, and Arcade growth is limited to once per UTC day, so normal play is rewarded without encouraging repetitive farming.
+Five story memories unlock as Bond grows, and each choice leans toward one trait. Care, story choices, incidents, and the Arcade shape Gentle, Playful, and Curious scores. Care-based growth is cooldown-gated, and Arcade growth is limited to once per UTC day, so normal play is rewarded without encouraging repetitive farming.
 
 ### Resolve Pocket Incidents
 
@@ -265,13 +268,16 @@ React UI ───────────────► Zustand actions
 │   ├── game/
 │   │   ├── progression.ts      # Pure progression, incident, and catalog rules
 │   │   ├── save.ts             # Fresh-state creation and save normalization
+│   │   ├── stories.ts          # Story chapters and unlock requirements
 │   │   ├── store.ts            # Zustand simulation actions and persistence
+│   │   ├── transfer.ts         # Save export/import parsing and validation
 │   │   └── types.ts            # Shared game-domain types and mood rules
 │   ├── scene/PetScene.tsx      # Low-poly 3D world and action animation
 │   ├── ui/
 │   │   ├── ActivityArcade.tsx  # Star Catch and Signal Memory
 │   │   ├── FirstRunTutorial.tsx# Persistent four-step onboarding
-│   │   └── GrowthStudio.tsx    # Evolution, incidents, and workshop UI
+│   │   ├── GrowthStudio.tsx    # Evolution, incidents, and workshop UI
+│   │   └── PocketVault.tsx     # Save export and restore controls
 │   ├── App.tsx                 # Main accessible application composition
 │   ├── main.tsx                # React entry point
 │   └── styles.css              # Visual system and responsive behavior
@@ -283,6 +289,8 @@ React UI ───────────────► Zustand actions
 
 - `progression.ts` contains pure, typed balancing rules rather than UI logic.
 - `save.ts` treats persisted browser data as untrusted and normalizes it field by field.
+- `transfer.ts` reuses that normalization so imported backup files get the same treatment.
+- `stories.ts` owns story content and unlock rules, so save clamps follow the real chapter count.
 - `store.ts` settles elapsed time once before timed actions and performs game transitions atomically.
 - `PetScene.tsx` renders the snapshot but does not own game truth.
 - React provides semantic controls and readable status independently of the 3D presentation.
@@ -301,6 +309,28 @@ See [`docs/DESIGN.md`](docs/DESIGN.md) and the [Living Progression plan](docs/pl
 - Editing the local clock or save data can affect progression; this is accepted for an offline solo game.
 
 To start over, use **Reset Save** in the footer and confirm the prompt. To remove all local state manually, clear the site's storage in browser settings.
+
+## Pocket Vault backups
+
+Because saves are browser-local, the **Pocket Vault** section lets you move progress yourself.
+
+- **Download backup** writes a readable JSON file such as `tamagochi-mori-2026-07-27.json`.
+- **Copy as text** places the same JSON on your clipboard when downloads are blocked.
+- **Choose backup file** or **Restore from text** loads a backup after a confirmation prompt.
+
+Backup files use a small wrapper around the save snapshot:
+
+```json
+{
+  "app": "tamagochi",
+  "format": 1,
+  "saveVersion": 3,
+  "exportedAt": "2026-07-27T12:00:00.000Z",
+  "snapshot": { "petName": "Mori", "…": "…" }
+}
+```
+
+Imports are treated as untrusted input. A backup is only accepted when it is recognizable, and every field then passes through the same normalization used for browser storage, so out-of-range, malformed, or unowned values are corrected rather than trusted. Restoring replaces the current save, so export first if you want to keep it. Nothing is uploaded, and no account is involved.
 
 ## Deployment
 
@@ -433,7 +463,6 @@ The existing game already includes saves, themes, activities, music, sound effec
 
 - Additional original story chapters and incident variants
 - More data-driven original creatures without replacing Mori's identity
-- Import/export for local save backups
 - Explicit cross-tab conflict handling
 - Optional quality controls for lower-powered mobile GPUs
 - Expanded keyboard and assistive-technology testing

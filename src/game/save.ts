@@ -6,6 +6,7 @@ import {
   isPersonalityId,
   utcDateKey,
 } from './progression'
+import { STORY_COUNT } from './stories'
 import type {
   ActionSignal,
   ActiveIncident,
@@ -118,7 +119,7 @@ export const normalizeSnapshot = (value: unknown, now = Date.now()): GameSnapsho
   const source = isRecord(value) ? value : {}
   const needs = normalizeNeeds(source.needs, fresh.needs)
   const bond = bounded(source.bond, fresh.bond, 0, 100)
-  const storyIndex = integer(source.storyIndex, 0, 0, 3)
+  const storyIndex = integer(source.storyIndex, 0, 0, STORY_COUNT)
   const ownedItemIds = normalizeOwnedItems(source.ownedItemIds)
   const activeIncident = normalizeIncident(source.activeIncident, now)
   const rawGrowth = finite(source.growthPoints, Number.NaN)

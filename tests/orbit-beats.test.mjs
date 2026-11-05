@@ -16,7 +16,7 @@ test('three-lane chart has stable seeded sequence, valid lanes and safe spacing'
   assert.equal(a[i].at-a[i-1].at,ORBIT_INTERVAL_MS)
   assert.notEqual(a[i].lane,a[i-1].lane)
  }
- assert.ok(ORBIT_END_MS>a.at(-1)+ORBIT_HIT_WINDOW_MS)
+ assert.ok(ORBIT_END_MS>a.at(-1).at+ORBIT_HIT_WINDOW_MS)
 })
 test('on-beat, good, okay and wrong-lane judging use real timestamp windows',()=>{
  const a=makeOrbitChart(44),n=a[0],resolved=new Set()

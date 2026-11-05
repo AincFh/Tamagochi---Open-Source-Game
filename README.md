@@ -4,6 +4,10 @@
 
 # Tamagochi
 
+> **AincFh 独立 Fork：**本分支为 `https://aincfh.github.io/Tamagochi---Open-Source-Game/` 添加完整 GitHub Pages 子路径部署支持，包含 Service Worker / PWA 安装作用域与图标路径调整。**实际可用性以本 Fork 的 CI 和 Pages 发布状态为准**；不会把原作者的 Vercel 站点当成本仓库的发布成果。原创游戏与资产由 [Tech-aficionado](https://github.com/Tech-aficionado/Tamagochi---Open-Source-Game) 开发，保留 MIT 版权和许可。
+
+
+
 ### A tiny life that remembers how you care.
 
 Look after Mori, play a few pocket-sized games, and watch the world change around your habits.

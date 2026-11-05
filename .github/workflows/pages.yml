@@ -29,6 +29,8 @@ jobs:
         env:
           GITHUB_PAGES_BASE_PATH: /Tamagochi---Open-Source-Game/
         run: npm run build
+      - name: Test rendered document assets and canonical URL
+        run: node --test tests/*.test.mjs
       - name: Assert installable manifest URLs use repo subdirectory
         run: |
           node --input-type=module -e "

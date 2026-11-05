@@ -25,6 +25,7 @@ export { getStoryBondRequirement, isStoryUnlocked, STORY_COUNT, STORY_EVENTS } f
 const ACTIVITY_SCORE_LIMIT: Record<MiniGameId, number> = {
   'star-catch': 100,
   'memory-flip': 20,
+  'orbit-beats': 72,
 }
 
 export interface SaveExport {
@@ -139,7 +140,7 @@ export const useGameStore = create<GameState>()(
         const reward = Math.max(3, Math.floor(safeScore / 2))
         const canEarnDailyGrowth = state.lastGrowthActivityDate !== today
         const growthAward = canEarnDailyGrowth ? 6 : 0
-        const trait = gameId === 'star-catch' ? 'playful' : 'curious'
+        const trait = gameId === 'memory-flip' ? 'curious' : 'playful'
         const personalityScores = canEarnDailyGrowth
           ? applyTraitAward(state.personalityScores, trait, 3)
           : state.personalityScores

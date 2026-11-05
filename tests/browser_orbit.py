@@ -34,7 +34,7 @@ try:
   if element: browser.execute_script('arguments[0].click()',element[0])
  browser.execute_script('document.querySelector(\'[data-arcade-game="orbit-beats"]\').click()')
  wait.until(lambda b:b.find_elements(By.CSS_SELECTOR,'.orbit-board .game-prompt button'))
- assert "Orbit Beats" in browser.find_element(By.CSS_SELECTOR,'.game-dialog header h2').text
+ assert "orbit beats" in browser.find_element(By.CSS_SELECTOR,'.game-dialog header h2').text.lower(), browser.execute_script("return document.querySelector('.game-dialog')?.innerText.slice(0,500)")
  before=browser.execute_script("""return JSON.parse(localStorage.getItem('pocket-worlds-save-v1'))?.state ?? {sparks:0}""")
  browser.save_screenshot(str(PROOF/'01-orbit-start.png'))
  browser.find_element(By.CSS_SELECTOR,'.orbit-board .game-prompt button').click()

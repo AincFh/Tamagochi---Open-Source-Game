@@ -21,6 +21,14 @@ Look after Mori, play a few pocket-sized games, and watch the world change aroun
 > [!IMPORTANT]
 > Tamagochi is an original project inspired by virtual-pet games. It does not use Tamagotchi characters, artwork, music, or other protected assets.
 
+## New playable mini-game: Orbit Beats
+
+**Orbit Beats** is a third arcade game added in this independent fork. Unlike the existing reaction and symbol-memory games, it is a fully timed **three-lane rhythm challenge** with 18 original procedural notes. Press **A / S / D** on a keyboard or tap three large lane pads on a phone when a note crosses the illuminated judgment line. Each note can be scored only once; perfect, good and okay timing earn 4, 2 or 1 points, and late notes break the combo.
+
+The chart runs from one monotonic clock instead of depending on CSS animation speed or frame rate. The scoring engine is pure JavaScript, tested for deterministic beat sequences, timing windows, repeat-input resistance, invalid input and mobile geometry. Finishing a round records the score and grants real **Sparks, Bond, Joy, personality progress and the existing daily play streak** through the game's original state store. The third high-score field is automatically initialized for older local saves. The game runs offline with the existing local PWA bundle and downloads no new media assets.
+
+GitHub Actions tests the exact precision mathematics and performs a real Chrome browser playthrough: click a note, wait for settlement, verify Sparks and saved best score, reload, and check touch controls in a narrow viewport. This is a meaningful third playable mini-game, not a completed commercial music-rhythm title.
+
 ## About the game
 
 Tamagochi is a small browser game about caring for Mori, an original low-poly companion. Mori has five needs and six care actions. Over time, the way you play affects bond, stories, personality, incidents, and growth.

@@ -493,3 +493,33 @@
     .action-feedback > span, .action-feedback-burst { animation: none !important; }
   }
 }
+
+@layer components {
+  /* ORBIT BEATS — no image download, no CSS animation for note timing.
+     JS advances all notes from the same monotonic clock used for scoring. */
+  .orbit-card { grid-column: 1 / -1; background: linear-gradient(115deg, var(--screen), color-mix(in srgb, var(--shell) 60%, var(--paper))); }
+  .orbit-card .activity-art { background: radial-gradient(circle at 50% 50%, var(--accent), var(--shell)); }
+  .orbit-board { min-height: min(430px, 58vh); padding: 14px 20px; display: grid; align-content: center; justify-items: center; gap: 12px; background: radial-gradient(ellipse at 50% 90%, color-mix(in srgb, var(--glow) 22%, transparent), transparent 68%), linear-gradient(135deg, var(--screen), color-mix(in srgb, var(--screen) 85%, var(--shell))); }
+  .orbit-track { width: min(560px, 100%); height: min(320px, 42vh); min-height: 240px; display: grid; grid-template-columns: repeat(3, 1fr); border: 3px solid var(--ink); box-shadow: 7px 7px 0 var(--ink); background: color-mix(in srgb, var(--ink) 86%, var(--screen)); position: relative; overflow: hidden; }
+  .orbit-lane { position: relative; overflow: hidden; border-right: 1px solid color-mix(in srgb, var(--paper) 23%, transparent); }
+  .orbit-lane:last-child { border-right: none; }
+  .orbit-stripe { position: absolute; inset: 0; pointer-events: none; background: linear-gradient(90deg, transparent 5%, color-mix(in srgb, var(--paper) 5%, transparent) 50%, transparent 95%); }
+  .orbit-judge { position: absolute; top: 76%; left: 3%; right: 3%; height: 4px; z-index: 2; pointer-events: none; border-radius: 4px; background: var(--accent); box-shadow: 0 0 0 2px var(--ink), 0 0 17px var(--accent); }
+  .orbit-note { width: 48px; height: 40px; position: absolute; left: 50%; z-index: 3; transform: translate(-50%, -50%); display: grid; place-items: center; border: 2px solid var(--ink); border-radius: 11px; background: var(--accent); color: var(--ink); box-shadow: 0 0 16px color-mix(in srgb, var(--accent) 70%, transparent); pointer-events: none; font-size: 27px; font-weight: 900; will-change: top; }
+  .orbit-hit { position: absolute; bottom: 11px; left: 50%; z-index: 4; transform: translateX(-50%); width: min(84px, 84%); height: 43px; border: 2px solid var(--accent); border-radius: 8px; background: color-mix(in srgb, var(--screen) 28%, var(--ink)); color: var(--paper); font-size: 15px; font-weight: 950; letter-spacing: .1em; cursor: pointer; touch-action: manipulation; }
+  .orbit-hit:hover,.orbit-hit:active { background: var(--accent); color: var(--ink); }
+  .orbit-feedback { display: flex; justify-content: space-between; align-items: center; width: min(560px, 100%); gap: 10px; color: var(--ink); font-size: 10px; font-weight: 850; letter-spacing: .08em; }
+  .orbit-feedback strong { color: color-mix(in srgb, var(--ink) 84%, var(--shell)); }
+  .orbit-feedback span { opacity: .65; text-align: right; }
+}
+@layer responsive {
+  @media(max-width: 650px){
+    .orbit-board { min-height: min(345px, 52dvh); padding: 10px 12px; }
+    .orbit-track { min-height: 225px; height: min(265px, 37dvh); }
+    .orbit-note { width: 38px; height: 35px; font-size: 22px; }
+    .orbit-hit { height: 44px; width: 80%; }
+    .orbit-feedback { flex-direction: column; gap: 4px; }
+    .orbit-feedback span { text-align: center; }
+    .game-hud { padding: 10px 12px; gap: 4px; }
+  }
+}

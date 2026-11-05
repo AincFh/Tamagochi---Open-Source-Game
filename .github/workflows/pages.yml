@@ -1,0 +1,64 @@
+name: MORI · Validate and Publish Browser PWA
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+concurrency:
+  group: mori-pages
+  cancel-in-progress: true
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - name: Static analysis
+        run: npm run lint
+      - name: Build for own GitHub Pages subdirectory
+        env:
+          GITHUB_PAGES_BASE_PATH: /Tamagochi---Open-Source-Game/
+        run: npm run build
+      - name: Assert installable manifest URLs use repo subdirectory
+        run: |
+          node --input-type=module -e "
+            import fs from 'node:fs';
+            const p='dist/manifest.webmanifest';
+            const m=JSON.parse(fs.readFileSync(p,'utf8'));
+            const base='/Tamagochi---Open-Source-Game/';
+            if(m.start_url!==base || m.scope!==base || m.id!==base)throw Error('PWA subpath manifest invalid');
+            if(!m.icons.every(x=>x.src.startsWith(base)))throw Error('PWA icon path escaped repository');
+            if(!fs.existsSync('dist/index.html'))throw Error('HTML build missing');
+            console.log('PWA scope, start_url, id and icon paths verified');
+          "
+      - name: Save validated Pages artifact
+        if: github.ref == 'refs/heads/main'
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+      - name: Upload preview for PR review
+        if: github.event_name == 'pull_request'
+        uses: actions/upload-artifact@v4
+        with:
+          name: mori-pages-build
+          path: dist/
+  deploy:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: https://aincfh.github.io/Tamagochi---Open-Source-Game/
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

@@ -172,6 +172,32 @@ function OrbitBeats({ onClose }: { onClose: () => void }) {
   const scoreRef = useRef(0)
   const comboRef = useRef(0)
   const finishedRef = useRef(false)
+  const soundRef = useRef<AudioContext | null>(null)
+
+  // Original Web Audio melody, scheduled against the audio clock on the
+  // same user gesture as START. No MP3, remote asset or licensed soundtrack.
+  const playMelody = () => {
+    try {
+      if (soundRef.current) void soundRef.current.close()
+      const ctx = new AudioContext()
+      soundRef.current = ctx
+      const baseTime = ctx.currentTime
+      const pitches = [293.66, 392.00, 493.88]
+      for (const note of notesRef.current) {
+        const when = baseTime + note.at / 1_000
+        const voice = ctx.createOscillator()
+        const volume = ctx.createGain()
+        voice.type = 'triangle'
+        voice.frequency.setValueAtTime(pitches[note.lane] * (note.id % 6 === 5 ? 2 : 1), when)
+        volume.gain.setValueAtTime(.0001, when)
+        volume.gain.exponentialRampToValueAtTime(.032, when + .012)
+        volume.gain.exponentialRampToValueAtTime(.0001, when + .19)
+        voice.connect(volume); volume.connect(ctx.destination)
+        voice.start(when); voice.stop(when + .20)
+      }
+    } catch { /* Muted/autoplay-restricted environments still play normally. */ }
+  }
+  useEffect(() => () => { if (soundRef.current) void soundRef.current.close() }, [])
 
   const begin = () => {
     notesRef.current = makeOrbitChart(Date.now() ^ Math.floor(performance.now()))
@@ -180,6 +206,7 @@ function OrbitBeats({ onClose }: { onClose: () => void }) {
     comboRef.current = 0
     finishedRef.current = false
     startedRef.current = performance.now()
+    playMelody()
     setScore(0); setCombo(0); setMisses(0); setBestCombo(0)
     setElapsed(0); setLastGrade('LISTEN FOR THE BEAT')
     setPhase('playing')

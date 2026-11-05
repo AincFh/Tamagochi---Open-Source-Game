@@ -1,6 +1,10 @@
 import { useEffect, useRef, useState, type CSSProperties } from 'react'
 import { useGameStore } from '../game/store'
 import type { MiniGameId } from '../game/types'
+import {
+ makeOrbitChart,judgeOrbitPress,expiredOrbitNotes,orbitNotePosition,
+ ORBIT_LANES,ORBIT_APPROACH_MS,ORBIT_END_MS,
+} from '../game/orbitBeats.mjs'
 
 const ROUND_DURATION_MS = 12_000
 const PADS = [
@@ -149,6 +153,120 @@ function MemoryFlip({ onClose }: { onClose: () => void }) {
   )
 }
 
+
+/** Original three-lane timing game — the note scheduler and judge use real
+ * monotonic time, independent of the browser frame-rate and animation CSS.
+ */
+function OrbitBeats({ onClose }: { onClose: () => void }) {
+  const complete = useGameStore((state) => state.completeActivity)
+  const [phase, setPhase] = useState<'ready' | 'playing' | 'done'>('ready')
+  const [elapsed, setElapsed] = useState(0)
+  const [score, setScore] = useState(0)
+  const [combo, setCombo] = useState(0)
+  const [misses, setMisses] = useState(0)
+  const [bestCombo, setBestCombo] = useState(0)
+  const [lastGrade, setLastGrade] = useState('WAITING')
+  const notesRef = useRef(makeOrbitChart(71273))
+  const judgedRef = useRef(new Set<number>())
+  const startedRef = useRef(0)
+  const scoreRef = useRef(0)
+  const comboRef = useRef(0)
+  const finishedRef = useRef(false)
+
+  const begin = () => {
+    notesRef.current = makeOrbitChart(Date.now() ^ Math.floor(performance.now()))
+    judgedRef.current = new Set()
+    scoreRef.current = 0
+    comboRef.current = 0
+    finishedRef.current = false
+    startedRef.current = performance.now()
+    setScore(0); setCombo(0); setMisses(0); setBestCombo(0)
+    setElapsed(0); setLastGrade('LISTEN FOR THE BEAT')
+    setPhase('playing')
+  }
+
+  useEffect(() => {
+    if (phase !== 'playing') return
+    const press = (lane: number) => {
+      if (finishedRef.current) return
+      const ms = performance.now() - startedRef.current
+      const hit = judgeOrbitPress(notesRef.current, judgedRef.current, lane, ms)
+      if (!hit) return
+      judgedRef.current.add(hit.noteId)
+      scoreRef.current += hit.points
+      comboRef.current++
+      setScore(scoreRef.current)
+      setCombo(comboRef.current)
+      setBestCombo((current) => Math.max(current, comboRef.current))
+      setLastGrade(hit.grade.toUpperCase() + ' · +' + hit.points)
+    }
+    const keyboard = (event: KeyboardEvent) => {
+      if (event.repeat || event.altKey || event.ctrlKey || event.metaKey) return
+      const lane = ['KeyA', 'KeyS', 'KeyD'].indexOf(event.code)
+      if (lane >= 0 && lane < ORBIT_LANES) {
+        event.preventDefault()
+        press(lane)
+      }
+    }
+    const tick = () => {
+      const ms = performance.now() - startedRef.current
+      for (const note of expiredOrbitNotes(notesRef.current, judgedRef.current, ms)) {
+        judgedRef.current.add(note.id)
+        comboRef.current = 0
+        setCombo(0)
+        setMisses((current) => current + 1)
+        setLastGrade('MISSED · KEEP GOING')
+      }
+      setElapsed(ms)
+      if (ms >= ORBIT_END_MS && !finishedRef.current) {
+        finishedRef.current = true
+        complete('orbit-beats', scoreRef.current)
+        setPhase('done')
+      }
+    }
+    // Touch uses this handler via a stable ref so on-screen keys and physical
+    // keyboard presses have exactly the same hit windows.
+    tapRef.current = press
+    window.addEventListener('keydown', keyboard)
+    const interval = window.setInterval(tick, 35)
+    tick()
+    return () => { window.clearInterval(interval); window.removeEventListener('keydown', keyboard); tapRef.current = null }
+  }, [phase, complete])
+
+  const tapRef = useRef<((lane: number) => void) | null>(null)
+  const scoreReward = Math.max(3, Math.floor(score / 2))
+  return (
+    <GameShell title="Orbit Beats" subtitle="Three lanes. Eighteen notes. Every beat counts." onClose={onClose}>
+      <div className="game-hud">
+        <span>TIME <b>{Math.max(0, Math.ceil((ORBIT_END_MS - elapsed) / 1000))}</b></span>
+        <span>SCORE <b>{score} / 72</b></span>
+        <span>COMBO <b>{combo}</b></span>
+      </div>
+      <div className="orbit-board">
+        {phase === 'ready' && <GamePrompt icon="◈" title="Catch the orbit." body="Hit A / S / D as each note reaches the gold line. On mobile, tap the three lane buttons. 18 timed notes — no speed tapping." action="START BEAT" onAction={begin} />}
+        {phase === 'playing' && (
+          <>
+            <div className="orbit-track" aria-label="Three-lane rhythm board">
+              {Array.from({ length: ORBIT_LANES }, (_, lane) => (
+                <div className="orbit-lane" key={lane} data-orbit-lane={lane}>
+                  <div className="orbit-stripe" aria-hidden="true" />
+                  <div className="orbit-judge" aria-hidden="true" />
+                  {notesRef.current.filter((note) => note.lane === lane && !judgedRef.current.has(note.id) && note.at - elapsed <= ORBIT_APPROACH_MS && note.at - elapsed >= -250).map((note) => (
+                    <span key={note.id} className="orbit-note" style={{ top: orbitNotePosition(note, elapsed) + '%' }} aria-hidden="true">✦</span>
+                  ))}
+                  <button type="button" className="orbit-hit" aria-label={'Hit lane ' + ['A', 'S', 'D'][lane]} onClick={() => tapRef.current?.(lane)}>{['A', 'S', 'D'][lane]}</button>
+                </div>
+              ))}
+            </div>
+            <div className="orbit-feedback" role="status" aria-live="off"><strong>{lastGrade}</strong><span>{misses} MISSES · BEST COMBO {bestCombo}</span></div>
+          </>
+        )}
+        {phase === 'done' && <GamePrompt icon="✦" title={score + ' rhythm points!'} body={'Best combo ' + bestCombo + ' · Missed ' + misses + ' · Earned ' + scoreReward + ' Sparks. Mori loved this new song.'} action="PLAY ANOTHER ROUND" onAction={begin} />}
+      </div>
+    </GameShell>
+  )
+}
+
 function GamePrompt({ icon, title, body, action, onAction }: { icon: string; title: string; body: string; action: string; onAction: () => void }) {
   return (
     <div className="game-prompt">
@@ -204,9 +322,14 @@ export function ActivityArcade() {
           <span className="activity-art">◆<i>●</i><b>▲</b></span>
           <span><small>MEMORY · 1 MIN</small><strong>Signal Memory</strong><em>Best score {best['memory-flip']}</em></span><b>PLAY →</b>
         </button>
+        <button className="activity-card orbit-card" data-arcade-game="orbit-beats" onClick={() => setActiveGame('orbit-beats')}>
+          <span className="activity-art">◈<i>✦</i><b>◌</b></span>
+          <span><small>RHYTHM · 18 NOTES</small><strong>Orbit Beats</strong><em>Best score {best['orbit-beats']}</em></span><b>PLAY →</b>
+        </button>
       </div>
       {activeGame === 'star-catch' && <StarCatch onClose={() => setActiveGame(null)} />}
       {activeGame === 'memory-flip' && <MemoryFlip onClose={() => setActiveGame(null)} />}
+      {activeGame === 'orbit-beats' && <OrbitBeats onClose={() => setActiveGame(null)} />}
     </section>
   )
 }

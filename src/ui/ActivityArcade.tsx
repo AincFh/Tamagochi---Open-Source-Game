@@ -5,6 +5,7 @@ import {
  makeOrbitChart,judgeOrbitPress,expiredOrbitNotes,orbitNotePosition,
  ORBIT_LANES,ORBIT_APPROACH_MS,ORBIT_END_MS,
 } from '../game/orbitBeats.mjs'
+import { GARDEN_W,GARDEN_LEVELS,GARDEN_MIN_FLOWERS,gardenCell,startGardenTrail,moveGardenTrail,moveGardenDirection,type GardenRun } from '../game/gardenTrail.mjs'
 
 const ROUND_DURATION_MS = 12_000
 const PADS = [
@@ -294,6 +295,96 @@ function OrbitBeats({ onClose }: { onClose: () => void }) {
   )
 }
 
+/** Fully interactive, no-RNG spatial puzzle: tap a neighboring tile or use arrows.
+ * Successful movement, flowers and gate arrival alone determine the reward. */
+function GardenTrail({ onClose }: { onClose: () => void }) {
+  const complete = useGameStore((state) => state.completeActivity)
+  const [run,setRun] = useState<GardenRun | null>(null)
+  const rewarded = useRef(false)
+  const start = () => { rewarded.current = false; setRun(startGardenTrail()) }
+  const move = (x:number,y:number) => setRun(current => current ? moveGardenTrail(current,x,y) : null)
+  const direction = (dx:number,dy:number) =>
+    setRun(current => current ? moveGardenDirection(current,dx,dy) : null)
+
+  useEffect(() => {
+    if (run?.status !== 'done' || rewarded.current) return
+    rewarded.current = true
+    complete('garden-trail',run.score)
+  },[run,complete])
+
+  useEffect(() => {
+    if (run?.status !== 'playing') return
+    const key=(event:KeyboardEvent)=>{
+      const directions:Record<string,[number,number]>={
+        ArrowUp:[0,-1],ArrowDown:[0,1],ArrowLeft:[-1,0],ArrowRight:[1,0],
+      }
+      const step=directions[event.key]
+      if (!step || event.repeat) return
+      event.preventDefault()
+      direction(step[0],step[1])
+    }
+    window.addEventListener('keydown',key)
+    return ()=>window.removeEventListener('keydown',key)
+  },[run?.status])
+
+  const player=run?.player
+  const visited=run?.visited ?? []
+  const scoreReward=Math.max(3,Math.floor((run?.score??0)/2))
+  return (
+    <GameShell title="Garden Trail" subtitle="Three little mazes. Each flower opens a new memory." onClose={onClose}>
+      <div className="game-hud">
+        <span>GARDEN <b>{run ? Math.min(3,run.level+1) : 1} / 3</b></span>
+        <span>FLOWERS <b>{run?.flowers??0} / {GARDEN_MIN_FLOWERS}</b></span>
+        <span>SCORE <b>{run?.score??0}</b></span>
+      </div>
+      <div className="garden-board">
+        {!run && <GamePrompt icon="✿" title="Follow the little light."
+          body="Walk one tile at a time, collect at least two flowers, and reach the garden gate. Tap adjacent tiles or use arrow keys. Every step is real."
+          action="ENTER THE GARDEN" onAction={start}/>}
+        {run?.status === 'playing' && (
+          <>
+            <div className="garden-layout">
+              <div className="garden-map" role="group" aria-label={'Garden puzzle '+(run.level+1)}>
+                {Array.from({length:GARDEN_W*GARDEN_W},(_,i)=>{
+                  const x=i%GARDEN_W,y=Math.floor(i/GARDEN_W)
+                  const cell=gardenCell(run.level,x,y)
+                  const isPlayer=player?.x===x&&player?.y===y
+                  const collected=visited.includes(x+','+y)
+                  const adjacent=player&&Math.abs(player.x-x)+Math.abs(player.y-y)===1&&cell!=='#'
+                  const content=isPlayer?'●':cell==='#'?'▦':cell==='*'&&!collected?'✿':cell==='G'?'◎':'·'
+                  const cls='garden-tile'+(isPlayer?' garden-player':'')+(cell==='#'?' garden-wall':'')+
+                    (cell==='G'?' garden-gate':'')+(cell==='*'&&!collected?' garden-flower':'')+
+                    (adjacent?' garden-near':'')
+                  return <button type="button" key={i} className={cls} data-garden-x={x} data-garden-y={y}
+                     disabled={!adjacent}
+                     aria-label={'Row '+(y+1)+' column '+(x+1)+', '+(isPlayer?'Mori':cell==='#'?'hedge':cell==='*'&&!collected?'flower':cell==='G'?'gate':'path')}
+                     onClick={()=>move(x,y)}>{content}</button>
+                })}
+              </div>
+              <div className="garden-side">
+                <strong>THE POCKET GARDEN</strong>
+                <p>Collect two blossoms and find the glowing gate. Hedge walls cannot be crossed, and revisits do not create more flowers.</p>
+                <div className="garden-stats"><span>STEPS <b>{run.moves}</b></span><span>RESTORED <b>{run.completed} / {GARDEN_LEVELS.length}</b></span></div>
+                <p className="garden-feedback" role="status">{run.feedback}</p>
+                <div className="garden-dpad" aria-label="Garden movement controls">
+                  <button type="button" className="garden-up" aria-label="Garden move up" onClick={()=>direction(0,-1)}>↑</button>
+                  <button type="button" className="garden-left" aria-label="Garden move left" onClick={()=>direction(-1,0)}>←</button>
+                  <button type="button" className="garden-down" aria-label="Garden move down" onClick={()=>direction(0,1)}>↓</button>
+                  <button type="button" className="garden-right" aria-label="Garden move right" onClick={()=>direction(1,0)}>→</button>
+                </div>
+              </div>
+            </div>
+          </>
+        )}
+        {run?.status === 'done' && <GamePrompt icon="✿"
+          title={run.score+' garden points!'}
+          body={'Three real gardens restored · '+run.totalFlowers+' blossoms found · '+scoreReward+' Sparks earned for Mori.'}
+          action="WALK THE GARDENS AGAIN" onAction={start}/>}
+      </div>
+    </GameShell>
+  )
+}
+
 function GamePrompt({ icon, title, body, action, onAction }: { icon: string; title: string; body: string; action: string; onAction: () => void }) {
   return (
     <div className="game-prompt">
@@ -353,10 +444,15 @@ export function ActivityArcade() {
           <span className="activity-art">◈<i>✦</i><b>◌</b></span>
           <span><small>RHYTHM · 18 NOTES</small><strong>Orbit Beats</strong><em>Best score {best['orbit-beats']}</em></span><b>PLAY →</b>
         </button>
+        <button className="activity-card garden-card" data-arcade-game="garden-trail" onClick={() => setActiveGame('garden-trail')}>
+          <span className="activity-art">✿<i>◌</i><b>✦</b></span>
+          <span><small>PUZZLE · 3 GARDENS</small><strong>Garden Trail</strong><em>Best score {best['garden-trail']}</em></span><b>PLAY →</b>
+        </button>
       </div>
       {activeGame === 'star-catch' && <StarCatch onClose={() => setActiveGame(null)} />}
       {activeGame === 'memory-flip' && <MemoryFlip onClose={() => setActiveGame(null)} />}
       {activeGame === 'orbit-beats' && <OrbitBeats onClose={() => setActiveGame(null)} />}
+      {activeGame === 'garden-trail' && <GardenTrail onClose={() => setActiveGame(null)} />}
     </section>
   )
 }

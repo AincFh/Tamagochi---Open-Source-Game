@@ -21,7 +21,7 @@ import type {
 
 const MODES: readonly GameMode[] = ['cozy', 'classic']
 const THEMES: readonly ThemeId[] = ['sakura', 'cyber', 'moss', 'moon']
-const MINI_GAMES: readonly MiniGameId[] = ['star-catch', 'memory-flip', 'orbit-beats']
+const MINI_GAMES: readonly MiniGameId[] = ['star-catch', 'memory-flip', 'orbit-beats', 'garden-trail']
 const ACTIONS: readonly ActionSignal[] = ['feed', 'play', 'wash', 'rest', 'cuddle', 'explore', 'story', 'activity', 'workshop', null]
 const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/
 

@@ -21,6 +21,14 @@ Look after Mori, play a few pocket-sized games, and watch the world change aroun
 > [!IMPORTANT]
 > Tamagochi is an original project inspired by virtual-pet games. It does not use Tamagotchi characters, artwork, music, or other protected assets.
 
+## New playable mini-game: Garden Trail
+
+**Garden Trail** is a fourth genuinely playable arcade activity, separate from rhythm, reactions and memory. Guide Mori through **three original 5×5 garden mazes** using keyboard arrows, four tactile direction buttons or by tapping an adjacent tile. Hedge walls physically block movement, while distant/diagonal teleports and stepping outside the grid are impossible. Collect **at least two different blossoms on each map** before the gate opens. A blossom scores 4 points only once per round, with each completed garden awarding a route-efficiency bonus. All three completed gardens are required to settle the final arcade reward.
+
+Every move and score change goes through a **pure, deterministic puzzle engine** and genuine input checks. Completing a real round calls the existing Arcade settlement exactly once and awards Sparks, bond, joy, personality growth and daily play-streak progress through Mori's original store. Closing halfway does not issue a completion reward. High score is preserved across local save, export/import and future reload, while an older save missing the fourth score is normalized safely. The puzzle uses original in-repository text tiles and CSS, not third-party art, songs or network downloads; its keyboard/touch interface respects reduced-motion preferences.
+
+GitHub Actions runs seven deterministic rule/integrity tests alongside the original rhythm tests, then requires a real Chromium playthrough of all three maps, the earned reward, old-save compatible best-score persistence, and a working 390px touch D-pad before publishing the PWA.
+
 ## New playable mini-game: Orbit Beats
 
 **Orbit Beats** is a third arcade game added in this independent fork. Unlike the existing reaction and symbol-memory games, it is a fully timed **three-lane rhythm challenge** with 18 original procedural notes. Press **A / S / D** on a keyboard or tap three large lane pads on a phone when a note crosses the illuminated judgment line. Each note can be scored only once; perfect, good and okay timing earn 4, 2 or 1 points, and late notes break the combo.

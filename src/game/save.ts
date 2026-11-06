@@ -54,7 +54,7 @@ export const freshSnapshot = (now = Date.now()): GameSnapshot => ({
   sparks: 0,
   playStreak: 0,
   lastActivityDate: null,
-  activityBest: { 'star-catch': 0, 'memory-flip': 0, 'orbit-beats': 0 },
+  activityBest: { 'star-catch': 0, 'memory-flip': 0, 'orbit-beats': 0, 'garden-trail': 0 },
   personalityScores: { gentle: 1, playful: 1, curious: 1 },
   personalityFocus: 'gentle',
   growthPoints: 0,

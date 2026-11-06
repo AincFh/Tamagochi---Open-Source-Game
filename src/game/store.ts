@@ -26,6 +26,7 @@ const ACTIVITY_SCORE_LIMIT: Record<MiniGameId, number> = {
   'star-catch': 100,
   'memory-flip': 20,
   'orbit-beats': 72,
+  'garden-trail': 108,
 }
 
 export interface SaveExport {

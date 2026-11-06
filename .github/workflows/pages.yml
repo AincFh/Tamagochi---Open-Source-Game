@@ -52,12 +52,15 @@ jobs:
             sleep 1
           done
           python tests/browser_orbit.py
+          python tests/browser_garden.py
       - name: Preserve arcade browser evidence
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: mori-orbit-beats-chrome
-          path: artifacts/orbit-beats/
+          path: |
+            artifacts/orbit-beats/
+            artifacts/garden-trail/
           if-no-files-found: ignore
       - name: Save validated Pages artifact
         if: github.ref == 'refs/heads/main'
